@@ -359,6 +359,7 @@ class UInputDevice(object):
 
     def emit_mouse(self, report):
         """Calculates relative mouse values from a report and writes them."""
+        
         for name, attr in self.layout.mouse.items():
             # If the attr is a tuple like (left_analog_y, "-")
             # then set the attr to just be the first item

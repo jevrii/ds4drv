@@ -1,6 +1,9 @@
+import rospy
+import rospkg
+
+from m2_control.msg import *
 from struct import Struct
 from sys import version_info as sys_version
-
 
 class StructHack(Struct):
     """Python <2.7.4 doesn't support struct unpack from bytearray."""
@@ -73,6 +76,11 @@ class DS4Device(object):
     """
 
     def __init__(self, device_name, device_addr, type):
+        print("hi")
+        rospy.init_node('ds4drv_node')
+        global pub
+        pub = rospy.Publisher("ps4_dpad_event", Ps4dpad, queue_size=10)
+
         self.device_name = device_name
         self.device_addr = device_addr
         self.type = type
@@ -151,6 +159,22 @@ class DS4Device(object):
         """Parse a buffer containing a HID report."""
         dpad = buf[5] % 16
 
+        pub.publish(parse_data(
+            (buf[7] & 2) != 0, (buf[7] & 1) != 0,
+
+            buf[35] & 0x7f, (buf[35] >> 7) == 0,
+            ((buf[37] & 0x0f) << 8) | buf[36],
+            buf[38] << 4 | ((buf[37] & 0xf0) >> 4),
+
+            buf[39] & 0x7f, (buf[39] >> 7) == 0,
+            ((buf[41] & 0x0f) << 8) | buf[40],
+            buf[42] << 4 | ((buf[41] & 0xf0) >> 4) 
+            ))
+
+        print("PS buttons:", (buf[7] & 2) != 0, (buf[7] & 1) != 0)
+        print("Touch 1:", ((buf[37] & 0x0f) << 8) | buf[36], buf[38] << 4 | ((buf[37] & 0xf0) >> 4))
+        print("Touch 2:", ((buf[41] & 0x0f) << 8) | buf[40], buf[42] << 4 | ((buf[41] & 0xf0) >> 4))
+        
         return DS4Report(
             # Left analog stick
             buf[1], buf[2],
@@ -234,3 +258,19 @@ class DS4Device(object):
             type_name = "USB"
 
         return "{0} Controller ({1})".format(type_name, self.device_name)
+
+def parse_data (dp_d, ps_d, t1_id, t1_on, t1_x, t1_y, t2_id, t2_on, t2_x, t2_y):
+        event=Ps4dpad()
+        event.dpad_down=dp_d
+        event.ps_down=ps_d
+        event.touch_1_id=t1_id
+        event.touch_1_active=t1_on
+        event.touch_1_x=t1_x
+        event.touch_1_y=t1_y
+        event.touch_2_id=t2_id
+        event.touch_2_active=t2_on
+        event.touch_2_x=t2_x
+        event.touch_2_y=t2_y
+        return event
+   
+        
