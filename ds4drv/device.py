@@ -79,7 +79,7 @@ class DS4Device(object):
         print("hi")
         rospy.init_node('ds4drv_node')
         global pub
-        pub = rospy.Publisher("ps4_dpad_event", Ps4dpad, queue_size=10)
+        pub = rospy.Publisher("ps4_tpad_event", Ps4tpad, queue_size=10)
 
         self.device_name = device_name
         self.device_addr = device_addr
@@ -260,8 +260,8 @@ class DS4Device(object):
         return "{0} Controller ({1})".format(type_name, self.device_name)
 
 def parse_data (dp_d, ps_d, t1_id, t1_on, t1_x, t1_y, t2_id, t2_on, t2_x, t2_y):
-        event=Ps4dpad()
-        event.dpad_down=dp_d
+        event=Ps4tpad()
+        event.tpad_down=dp_d
         event.ps_down=ps_d
         event.touch_1_id=t1_id
         event.touch_1_active=t1_on
